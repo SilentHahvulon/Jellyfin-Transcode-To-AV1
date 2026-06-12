@@ -77,7 +77,7 @@ Run this script to monitor folders where media is added directly without needing
 ### 3. Manual Transcoding (`ffmpeg_convert_av1.bat`)
 You can also use the batch script standalone by dragging and dropping a video file onto it, or passing the file path as an argument.
 - It prompts for Quality (XPSNR target), Preset, and Parallelism level.
-- If left unattended, it will auto-select default values (High Quality, Preset 1, Parallelism 6) after 120 seconds.
+- If left unattended, it will auto-select default values (High Quality (XPSNR of 43), Preset 1, Parallelism 6) after 120 seconds.
 
 ## Architecture
 
