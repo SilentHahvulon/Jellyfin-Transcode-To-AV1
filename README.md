@@ -24,7 +24,7 @@ To use these scripts, you will need the following installed and available in you
 - **[FFmpeg](https://ffmpeg.org/)**
 - **[ab-av1](https://github.com/alexheretic/ab-av1)**
 - **Radarr, Sonarr, and Seerr** (for metadata and request tracking)
-- **Jellyfin** (for in-app notifications)
+- **Jellyfin**
 
 ## Setup
 
