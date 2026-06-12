@@ -95,11 +95,10 @@ function Invoke-BatchedNotification {
             embeds = @($successEmbed)
             username = "Library Updates"
         }
-        Invoke-RestMethod -Uri $env:DISCORD_REQUEST_WH -Method Post -Body ($discordPayload | ConvertTo-Json -Depth 10) -ContentType "application/json" -ErrorAction SilentlyContinue
+        Send-DiscordWebhook -WebhookUrl $env:DISCORD_REQUEST_WH -Payload $discordPayload
 
         # --- NTFY ---
-        $ntfyHeaders = @{ "Authorization" = "Bearer $($env:NTFY_TOKEN)"; "Title" = "New Media Added"; "Tags" = "popcorn" }
-        Invoke-RestMethod -Uri $env:NTFY_URL -Method Post -Headers $ntfyHeaders -Body $ntfyBody -ErrorAction SilentlyContinue
+        Send-NtfyNotification -NtfyUrl $env:NTFY_URL -Token $env:NTFY_TOKEN -Title "New Media Added" -Message $ntfyBody -Tags "popcorn"
 
         # --- EMAIL & TOAST (If Requested) ---
         if ($mediaData.IsRequested -and $global:Config.Users.ContainsKey($mediaData.RequesterName)) {

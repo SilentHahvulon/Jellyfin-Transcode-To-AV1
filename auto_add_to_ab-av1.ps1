@@ -8,21 +8,6 @@ $script:batchFile = $global:Config.Paths.BatchScript
 
 $script:folderMap = $global:Config.WatchFolders
 
-function Write-DualLog {
-    param (
-        [Parameter(Mandatory=$true)]
-        [string]$Message,
-        
-        [ConsoleColor]$Color = 'Gray'
-    )
-    
-    # 1. VISUAL: Sends the colored text only to your terminal
-    Write-Host $Message -ForegroundColor $Color
-    
-    # 2. HIDDEN: Appends plain, ANSI-free text to a dedicated log file
-    Add-Content -Path $script:cleanLog -Value $Message
-}
-
 # --- MODERN CONCURRENT QUEUES ---
 $script:PriorityQueue = [System.Collections.Concurrent.ConcurrentQueue[psobject]]::new()
 $script:StandardQueue = [System.Collections.Concurrent.ConcurrentQueue[psobject]]::new()
@@ -30,35 +15,14 @@ $script:StandardQueue = [System.Collections.Concurrent.ConcurrentQueue[psobject]
 Get-EventSubscriber | Unregister-Event -ErrorAction SilentlyContinue
 
 function Write-IdleStatus {
-    Write-DualLog "`nMonitoring folders... Press Ctrl+C to stop." -Color Magenta
+    Write-DualLog -Message "`nMonitoring folders... Press Ctrl+C to stop." -Color Magenta
 }
 
-# --- API FUNCTIONS ---
-function Update-RadarrMovie($oldPath, $newPath) {
-    try {
-        $headers = @{"X-Api-Key" = $env:RADARR_API_KEY}
-        $oldFolder = Split-Path -Path $oldPath -Parent
-        $movies = Invoke-RestMethod -Uri "$($env:RADARR_URL)/api/v3/movie" -Method Get -Headers $headers
-        $movie = $movies | Where-Object { $_.path -eq $oldFolder }
-        if ($movie) {
-            $newFolder = Split-Path -Path $newPath -Parent
-            $rootFolder = Split-Path -Path $newFolder -Parent
-            $editorBody = @{ movieIds = @($movie.id); rootFolderPath = $rootFolder; moveFiles = $false } | ConvertTo-Json -Depth 2
-            Invoke-RestMethod -Uri "$($env:RADARR_URL)/api/v3/movie/editor" -Method Put -Body $editorBody -ContentType "application/json" -Headers $headers | Out-Null
-            $cmdBody = @{ name = "rescanMovie"; movieId = $movie.id } | ConvertTo-Json
-            Invoke-RestMethod -Uri "$($env:RADARR_URL)/api/v3/command" -Method Post -Body $cmdBody -ContentType "application/json" -Headers $headers | Out-Null
-            Write-DualLog "[Radarr] Updated and Rescanned: $($movie.title)" -Color Green
-        }
-    } catch { Write-DualLog "Radarr Error: $($_.Exception.Message)" -Color Red }
-}
-
-function Invoke-SonarrImport($finalFilePath) {
-    try {
-        $headers = @{"X-Api-Key" = $env:SONARR_API_KEY}
-        $body = @{ name = "DownloadedEpisodesScan"; path = $finalFilePath; importMode = "Move" } | ConvertTo-Json
-        Invoke-RestMethod -Uri "$($env:SONARR_URL)/api/v3/command" -Method Post -Body $body -ContentType "application/json" -Headers $headers
-        Write-DualLog "[Sonarr] Import command sent for: $(Split-Path $finalFilePath -Leaf)" -Color Green
-    } catch { Write-DualLog "Sonarr Import Error: $($_.Exception.Message)" -Color Red }
+# Override Write-DualLog to automatically include the log file
+$originalWriteDualLog = (Get-Command Write-DualLog).ScriptBlock
+function Write-DualLog {
+    param([string]$Message, [ConsoleColor]$Color = 'Gray')
+    & $originalWriteDualLog -Message $Message -Color $Color -LogFile $script:cleanLog
 }
 
 # --- MAIN PROCESSING LOGIC ---
@@ -101,10 +65,8 @@ function Invoke-Transcode($filePath, $watchBase, $processedBase, $type) {
                 username = "Library Updates"
             }
 
-            Invoke-RestMethod -Uri $env:DISCORD_REQUEST_WH -Method Post -Body ($discordPayload | ConvertTo-Json -Depth 10) -ContentType "application/json" -ErrorAction SilentlyContinue
-
-            $ntfyHeaders = @{ "Authorization" = "Bearer $($env:NTFY_TOKEN)"; "Title" = "Transcode Started" }
-            Invoke-RestMethod -Uri $env:NTFY_URL -Method Post -Headers $ntfyHeaders -Body "$displayTitle ($sizeGB) downloaded and processing." -ErrorAction SilentlyContinue
+            Send-DiscordWebhook -WebhookUrl $env:DISCORD_REQUEST_WH -Payload $discordPayload
+            Send-NtfyNotification -NtfyUrl $env:NTFY_URL -Token $env:NTFY_TOKEN -Title "Transcode Started" -Message "$displayTitle ($sizeGB) downloaded and processing."
         
             if ($mediaData.IsRequested -and $global:Config.Users.ContainsKey($mediaData.RequesterName)) {
                 $userInfo = $global:Config.Users[$mediaData.RequesterName]
@@ -170,8 +132,8 @@ function Invoke-Transcode($filePath, $watchBase, $processedBase, $type) {
                 if ((Get-ChildItem -Path $sourceDir).Count -eq 0) { Remove-Item -Path $sourceDir -Force }
             }
 
-            if ($type -eq "Sonarr") { Invoke-SonarrImport -finalFilePath $destination }
-            elseif ($type -eq "Radarr") { Update-RadarrMovie $originalPath $destination }
+            if ($type -eq "Sonarr") { Invoke-SonarrImport -FinalFilePath $destination }
+            elseif ($type -eq "Radarr") { Update-RadarrMovie -OldPath $originalPath -NewPath $destination -MovieId $mediaData.ArrId }
 
             # --- SUCCESS NOTIFICATIONS ---
             $newFileInfo = Get-Item -LiteralPath $destination
@@ -208,10 +170,8 @@ function Invoke-Transcode($filePath, $watchBase, $processedBase, $type) {
                     username = "Library Updates"
                 }
 
-                Invoke-RestMethod -Uri $env:DISCORD_REQUEST_WH -Method Post -Body ($successPayload | ConvertTo-Json -Depth 10) -ContentType "application/json" -ErrorAction SilentlyContinue
-
-                $ntfyHeaders = @{ "Authorization" = "Bearer $($env:NTFY_TOKEN)"; "Title" = "Transcode Complete"; "Tags" = "white_check_mark" }
-                Invoke-RestMethod -Uri $env:NTFY_URL -Method Post -Headers $ntfyHeaders -Body "$displayTitle is ready to watch! Saved $savedGB ($percentSaved%)." -ErrorAction SilentlyContinue
+                Send-DiscordWebhook -WebhookUrl $env:DISCORD_REQUEST_WH -Payload $successPayload
+                Send-NtfyNotification -NtfyUrl $env:NTFY_URL -Token $env:NTFY_TOKEN -Title "Transcode Complete" -Message "$displayTitle is ready to watch! Saved $savedGB ($percentSaved%)." -Tags "white_check_mark"
             
                 if ($mediaData.IsRequested -and $global:Config.Users.ContainsKey($mediaData.RequesterName)) {
                     $userInfo = $global:Config.Users[$mediaData.RequesterName]
