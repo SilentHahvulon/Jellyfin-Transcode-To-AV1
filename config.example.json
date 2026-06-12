@@ -1,0 +1,54 @@
+{
+    "Users": {
+        "admin_username": {
+            "Name": "Admin",
+            "JellyfinUsers": ["admin_username", "admin_alt_if_used"],
+            "Email": "admin@domain.com",
+            "DiscordID": "your_discord_user_id"
+        },
+        "friend_username": {
+            "Name": "Friend",
+            "Email": "friend@domain.com",
+            "DiscordID": "discord_user_id"
+        }
+    },
+    "WatchFolders": [
+        {
+            "Watch": "C:\\Path\\To\\Unprocessed Movies",
+            "Processed": "M:\\Path\\To\\Movies",
+            "Type": "Radarr",
+            "IsPriority": false
+        },
+        {
+            "Watch": "C:\\Path\\To\\Unprocessed TV Shows",
+            "Processed": "M:\\Path\\To\\TV Shows",
+            "Type": "Sonarr",
+            "IsPriority": false
+        },
+        {
+            "Watch": "C:\\Path\\To\\Unprocessed VIP Movies",
+            "Processed": "M:\\Path\\To\\Movies",
+            "Type": "Radarr",
+            "IsPriority": true
+        }
+    ],
+    "DirectWatchFolders": [
+        {
+            "Watch": "M:\\Path\\To\\Movies",
+            "Type": "Radarr"
+        },
+        {
+            "Watch": "M:\\Path\\To\\TV Shows",
+            "Type": "Sonarr"
+        },
+        {
+            "Watch": "M:\\Path\\To\\Anime",
+            "Type": "Sonarr"
+        }
+    ],
+    "Paths": {
+        "LogDirectory": "C:\\Path\\To\\Logs",
+        "BatchScript": "C:\\Path\\To\\ffmpeg_convert_av1.bat",
+        "FfmpegTemp": "C:\\Path\\To\\ffmpeg\\Temp"
+    }
+}

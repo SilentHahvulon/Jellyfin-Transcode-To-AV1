@@ -1,0 +1,13 @@
+# Ignore sensitive configuration files
+.env
+config.json
+
+# Ignore logs
+*.log
+Logs/
+transcode_history.log
+stop_transcode.flag
+
+# Ignore temporary output directories
+Temp/
+*_transcode.log
