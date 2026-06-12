@@ -67,6 +67,44 @@ if (Test-Path $configExamplePath) {
     $configJson.Paths.BatchScript = Prompt-User -Message "Enter BatchScript path" -DefaultValue $configJson.Paths.BatchScript
     $configJson.Paths.FfmpegTemp = Prompt-User -Message "Enter FfmpegTemp path" -DefaultValue $configJson.Paths.FfmpegTemp
 
+    $configureUsers = Prompt-User -Message "Do you want to configure Users now? (y/n)" -DefaultValue "y"
+    if ($configureUsers -eq 'y') {
+        $configJson.Users = @{}
+        while ($true) {
+            $seerrUser = Prompt-User -Message "Enter the Seerr username (used as the main key)"
+            if ([string]::IsNullOrWhiteSpace($seerrUser)) {
+                Write-Host "Seerr username cannot be empty." -ForegroundColor Red
+                continue
+            }
+
+            $userObj = @{}
+            $userObj.Name = Prompt-User -Message "Enter display Name for this user" -DefaultValue $seerrUser
+
+            $jfUsersStr = Prompt-User -Message "Enter Jellyfin usernames (comma separated, leave empty if same as Seerr username)" -DefaultValue ""
+            if ([string]::IsNullOrWhiteSpace($jfUsersStr) -or $jfUsersStr -eq "n/a") {
+                $userObj.JellyfinUsers = @($seerrUser)
+            } else {
+                $jfUsers = $jfUsersStr -split ',' | ForEach-Object { $_.Trim() }
+                $userObj.JellyfinUsers = @($jfUsers)
+            }
+
+            $email = Prompt-User -Message "Enter Email address (leave empty or type 'n/a' to skip)" -DefaultValue ""
+            if (-not [string]::IsNullOrWhiteSpace($email) -and $email -ne "n/a") {
+                $userObj.Email = $email
+            }
+
+            $discordId = Prompt-User -Message "Enter Discord ID (leave empty or type 'n/a' to skip)" -DefaultValue ""
+            if (-not [string]::IsNullOrWhiteSpace($discordId) -and $discordId -ne "n/a") {
+                $userObj.DiscordID = $discordId
+            }
+
+            $configJson.Users.$seerrUser = $userObj
+
+            $addMore = Prompt-User -Message "Add another User? (y/n)" -DefaultValue "n"
+            if ($addMore -ne 'y') { break }
+        }
+    }
+
     $configureFolders = Prompt-User -Message "Do you want to configure WatchFolders now? (y/n)" -DefaultValue "n"
     if ($configureFolders -eq 'y') {
         $configJson.WatchFolders = @()
@@ -110,7 +148,6 @@ if (Test-Path $configExamplePath) {
 
     $configJson | ConvertTo-Json -Depth 10 | Set-Content -Path $configPath -Encoding UTF8
     Write-Host "Saved config.json file successfully!" -ForegroundColor Green
-    Write-Host "Note: You may still want to manually configure the 'Users' section in config.json." -ForegroundColor Yellow
 } else {
     Write-Host "config.example.json not found. Skipping config.json configuration." -ForegroundColor Red
 }
