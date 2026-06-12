@@ -34,17 +34,14 @@ To use these scripts, you will need the following installed and available in you
    cd jellyfin-media-automation
    ```
 
-2. **Configure Environment Variables:**
-   - Copy `.env.example` to `.env`.
-   - Fill in your API keys, URLs, SMTP settings, and Webhooks.
+2. **Configuration:**
+   The easiest way to set up the project is to run the interactive setup script, which will guide you through creating your `.env` and `config.json` files based on the provided templates:
    ```powershell
-   cp .env.example .env
+   .\setup.ps1
    ```
+   *Alternatively, you can manually copy `.env.example` to `.env` and `config.example.json` to `config.json` and edit them with your favorite text editor.*
 
-3. **Configure JSON Settings:**
-   - Copy `config.example.json` to `config.json`.
-   - Edit `config.json` to match your directory structures and user mappings.
-   - **Users**: Maps Seerr requester names to their Jellyfin usernames, Email, and Discord ID.
+   - **Users**: (In `config.json`) Maps Seerr requester names to their Jellyfin usernames, Email, and Discord ID. This section may require manual configuration.
    - **WatchFolders**: Folders to monitor for *transcoding*. Moves completed files to the `Processed` path.
    - **DirectWatchFolders**: Folders to monitor for *direct additions* (no transcoding, just notifications).
    - **Paths**: Paths for logs, the temporary FFmpeg directory, and the location of the `ffmpeg_convert_av1.bat` script.
