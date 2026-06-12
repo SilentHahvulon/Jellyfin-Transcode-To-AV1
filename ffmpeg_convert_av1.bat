@@ -65,33 +65,7 @@ echo [4, 5, 6] Balanced (Balanced File Size and Time)
 echo [7, 8, 9] Fast (Largest File Size, Shortest Time)
 choice /c 123456789 /t 120 /d 1 /n /m "Choose a preset (1-9): "
 
-if %ERRORLEVEL% EQU 1 (
-    set "preset=1"
-)
-if %ERRORLEVEL% EQU 2 (
-    set "preset=2"
-)
-if %ERRORLEVEL% EQU 3 (
-    set "preset=3"
-)
-if %ERRORLEVEL% EQU 4 (
-    set "preset=4"
-)
-if %ERRORLEVEL% EQU 5 (
-    set "preset=5"
-)
-if %ERRORLEVEL% EQU 6 (
-    set "preset=6"
-)
-if %ERRORLEVEL% EQU 7 (
-    set "preset=7"
-)
-if %ERRORLEVEL% EQU 8 (
-    set "preset=8"
-)
-if %ERRORLEVEL% EQU 9 (
-    set "preset=9"
-)
+set "preset=!ERRORLEVEL!"
 
 echo ----------------------------------------------------
 echo Select Parallelism level. Higher is faster, but uses more CPU and Memory resources.
@@ -101,28 +75,13 @@ echo [3, 4] Balanced Parallelism (Balanced CPU/RAM and Time)
 echo [5, 6] High Parallelism (Very High Resource Usage, Shorter Time [do not select 6 if you are using PC])
 choice /c 123456 /t 120 /d 6 /n /m "Choose a parallelism level (1-6): "
 
-if %ERRORLEVEL% EQU 1 (
-    set "parallelism=1"
+set "parallelism=!ERRORLEVEL!"
+
+if !parallelism! LEQ 2 (
     set "parallelismTier=Low"
-)
-if %ERRORLEVEL% EQU 2 (
-    set "parallelism=2"
-    set "parallelismTier=Low"
-)
-if %ERRORLEVEL% EQU 3 (
-    set "parallelism=3"
+) else if !parallelism! LEQ 4 (
     set "parallelismTier=Balanced"
-)
-if %ERRORLEVEL% EQU 4 (
-    set "parallelism=4"
-    set "parallelismTier=Balanced"
-)
-if %ERRORLEVEL% EQU 5 (
-    set "parallelism=5"
-    set "parallelismTier=High"
-)
-if %ERRORLEVEL% EQU 6 (
-    set "parallelism=6"
+) else (
     set "parallelismTier=High"
 )
 

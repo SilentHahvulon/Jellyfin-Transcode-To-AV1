@@ -22,6 +22,57 @@ if (Test-Path -LiteralPath $configFile) {
 }
 
 # --- SHARED FUNCTIONS ---
+
+function Write-DualLog {
+    param (
+        [Parameter(Mandatory=$true)]
+        [string]$Message,
+
+        [ConsoleColor]$Color = 'Gray',
+        [string]$LogFile = $null
+    )
+
+    # 1. VISUAL: Sends the colored text only to your terminal
+    Write-Host $Message -ForegroundColor $Color
+
+    # 2. HIDDEN: Appends plain, ANSI-free text to a dedicated log file (if provided)
+    if ($LogFile) {
+        Add-Content -Path $LogFile -Value $Message
+    }
+}
+
+function Send-DiscordWebhook {
+    param(
+        [Parameter(Mandatory=$true)][string]$WebhookUrl,
+        [Parameter(Mandatory=$true)][hashtable]$Payload
+    )
+    if (-not [string]::IsNullOrWhiteSpace($WebhookUrl)) {
+        try {
+            Invoke-RestMethod -Uri $WebhookUrl -Method Post -Body ($Payload | ConvertTo-Json -Depth 10) -ContentType "application/json" -ErrorAction Stop | Out-Null
+        } catch { Write-Warning "[$($MyInvocation.MyCommand.Name)] Failed to send Discord webhook: $_" }
+    }
+}
+
+function Send-NtfyNotification {
+    param(
+        [Parameter(Mandatory=$true)][string]$NtfyUrl,
+        [string]$Token,
+        [string]$Title,
+        [string]$Message,
+        [string]$Tags
+    )
+    if (-not [string]::IsNullOrWhiteSpace($NtfyUrl)) {
+        try {
+            $headers = @{}
+            if (-not [string]::IsNullOrWhiteSpace($Token)) { $headers["Authorization"] = "Bearer $Token" }
+            if (-not [string]::IsNullOrWhiteSpace($Title)) { $headers["Title"] = $Title }
+            if (-not [string]::IsNullOrWhiteSpace($Tags)) { $headers["Tags"] = $Tags }
+
+            Invoke-RestMethod -Uri $NtfyUrl -Method Post -Headers $headers -Body $Message -ErrorAction Stop | Out-Null
+        } catch { Write-Warning "[$($MyInvocation.MyCommand.Name)] Failed to send Ntfy notification: $_" }
+    }
+}
+
 function Send-JellyfinToast {
     param (
         [Parameter(Mandatory=$true)][string[]]$Users,
@@ -50,7 +101,7 @@ function Send-JellyfinToast {
 }
 
 function Get-SeerrData($filePath, $type) {
-    $result = @{ Title = ""; PosterUrl = ""; RequesterName = ""; IsRequested = $false; Mention = "" }
+    $result = @{ Title = ""; PosterUrl = ""; RequesterName = ""; IsRequested = $false; Mention = ""; ArrId = $null }
     try {
         $oldFolder = Split-Path -Path $filePath -Parent
         
@@ -66,11 +117,21 @@ function Get-SeerrData($filePath, $type) {
         if ($type -eq "Radarr") {
             $movies = Invoke-RestMethod -Uri "$($env:RADARR_URL)/api/v3/movie" -Method Get -Headers @{ "X-Api-Key" = $env:RADARR_API_KEY }
             $match = $movies | Where-Object { $_.path -eq $oldFolder } | Select-Object -First 1
-            if ($match) { $mediaId = $match.tmdbId; $result.Title = $match.title; $seerrMediaType = "movie" }
+            if ($match) {
+                $mediaId = $match.tmdbId
+                $result.Title = $match.title
+                $seerrMediaType = "movie"
+                $result.ArrId = $match.id
+            }
         } else {
             $shows = Invoke-RestMethod -Uri "$($env:SONARR_URL)/api/v3/series" -Method Get -Headers @{ "X-Api-Key" = $env:SONARR_API_KEY }
             $match = $shows | Where-Object { $_.path -eq $oldFolder } | Select-Object -First 1
-            if ($match) { $mediaId = $match.tvdbId; $result.Title = $match.title; $seerrMediaType = "tv" }
+            if ($match) {
+                $mediaId = $match.tvdbId
+                $result.Title = $match.title
+                $seerrMediaType = "tv"
+                $result.ArrId = $match.id
+            }
         }
 
         if ($mediaId) {
@@ -154,4 +215,46 @@ function Test-FileStable {
     }
     $Job.LastSize = $currentSize
     return $false
+}
+
+function Update-RadarrMovie {
+    param(
+        [string]$OldPath,
+        [string]$NewPath,
+        $MovieId = $null
+    )
+    try {
+        $headers = @{"X-Api-Key" = $env:RADARR_API_KEY}
+        $oldFolder = Split-Path -Path $OldPath -Parent
+
+        # If we didn't pass the ID, find it the hard way
+        if ($null -eq $MovieId -or $MovieId -eq 0) {
+            $movies = Invoke-RestMethod -Uri "$($env:RADARR_URL)/api/v3/movie" -Method Get -Headers $headers
+            $movie = $movies | Where-Object { $_.path -eq $oldFolder }
+            if ($movie) { $MovieId = $movie.id }
+        }
+
+        if ($MovieId) {
+            # Update path
+            $newFolder = Split-Path -Path $NewPath -Parent
+            $rootFolder = Split-Path -Path $newFolder -Parent
+            $editorBody = @{ movieIds = @($MovieId); rootFolderPath = $rootFolder; moveFiles = $false } | ConvertTo-Json -Depth 2
+            Invoke-RestMethod -Uri "$($env:RADARR_URL)/api/v3/movie/editor" -Method Put -Body $editorBody -ContentType "application/json" -Headers $headers | Out-Null
+
+            # Rescan
+            $cmdBody = @{ name = "rescanMovie"; movieId = $MovieId } | ConvertTo-Json
+            Invoke-RestMethod -Uri "$($env:RADARR_URL)/api/v3/command" -Method Post -Body $cmdBody -ContentType "application/json" -Headers $headers | Out-Null
+            Write-DualLog "[Radarr] Updated and Rescanned Movie ID: $MovieId" -Color Green
+        }
+    } catch { Write-DualLog "Radarr Error: $($_.Exception.Message)" -Color Red }
+}
+
+function Invoke-SonarrImport {
+    param([string]$FinalFilePath)
+    try {
+        $headers = @{"X-Api-Key" = $env:SONARR_API_KEY}
+        $body = @{ name = "DownloadedEpisodesScan"; path = $FinalFilePath; importMode = "Move" } | ConvertTo-Json
+        Invoke-RestMethod -Uri "$($env:SONARR_URL)/api/v3/command" -Method Post -Body $body -ContentType "application/json" -Headers $headers | Out-Null
+        Write-DualLog "[Sonarr] Import command sent for: $(Split-Path $FinalFilePath -Leaf)" -Color Green
+    } catch { Write-DualLog "Sonarr Import Error: $($_.Exception.Message)" -Color Red }
 }
