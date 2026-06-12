@@ -85,3 +85,9 @@ You can also use the batch script standalone by dragging and dropping a video fi
 - **`auto_add_to_ab-av1.ps1`**: The file system watcher for transcoding. Manages concurrent queues and triggers the batch script.
 - **`direct_add_notify.ps1`**: The file system watcher for direct media. Handles batching and triggers notifications.
 - **`ffmpeg_convert_av1.bat`**: The wrapper around `ab-av1` and `ffmpeg` that performs the actual AV1 encode.
+
+## Note
+
+I am very new to coding and I built this project mainly for myself because I wasn't completely satisfied with how tools like Tdarr function. I decided to upload it here in case someone else finds it useful or can learn from it.
+
+*AI Disclosure: I used Google Gemini as a collaboration partner throughout the writing and troubleshooting of this repository. Jules (an AI agent) was also involved in writing this README file.*
