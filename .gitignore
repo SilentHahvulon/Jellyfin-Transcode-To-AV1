@@ -11,3 +11,6 @@ stop_transcode.flag
 # Ignore temporary output directories
 Temp/
 *_transcode.log
+
+# Ignore local test builds
+JellyfinMediaAutomation.zip

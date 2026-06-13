@@ -19,25 +19,16 @@ if (-not (Test-Path $InstallPath)) {
 }
 
 Write-Host "Downloading latest version from GitHub..." -ForegroundColor Yellow
-$zipUrl = "https://github.com/SilentHahvulon/Jellyfin-Transcode-To-AV1/archive/refs/heads/main.zip"
+$zipUrl = "https://github.com/SilentHahvulon/Jellyfin-Transcode-To-AV1/releases/latest/download/JellyfinMediaAutomation.zip"
 $zipPath = "$env:TEMP\JellyfinMediaAutomation.zip"
 
 Invoke-WebRequest -Uri $zipUrl -OutFile $zipPath
 
 Write-Host "Extracting files to $InstallPath..." -ForegroundColor Yellow
-$tempExtract = "$env:TEMP\JellyfinMediaAutomation_Extract"
-if (Test-Path $tempExtract) { Remove-Item -Recurse -Force $tempExtract }
-New-Item -ItemType Directory -Path $tempExtract | Out-Null
-
-Expand-Archive -Path $zipPath -DestinationPath $tempExtract -Force
-
-# GitHub zips put everything in a subfolder (e.g., Jellyfin-Transcode-To-AV1-main)
-$extractedFolder = Get-ChildItem -Path $tempExtract -Directory | Select-Object -First 1
-Copy-Item -Path "$($extractedFolder.FullName)\*" -Destination $InstallPath -Recurse -Force
+Expand-Archive -Path $zipPath -DestinationPath $InstallPath -Force
 
 # Cleanup temp files
 Remove-Item -Path $zipPath -Force
-Remove-Item -Recurse -Force $tempExtract
 
 Write-Host "Files downloaded and extracted successfully." -ForegroundColor Green
 Write-Host ""

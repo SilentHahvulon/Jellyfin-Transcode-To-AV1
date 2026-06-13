@@ -1,0 +1,40 @@
+name: Build and Release Installer Zip
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Create Zip File
+        run: |
+          zip -r JellyfinMediaAutomation.zip . -x "*.git*" -x "*.github*"
+
+      - name: Update Latest Tag
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git tag -f latest
+          git push origin -f latest
+
+      - name: Create or Update Release
+        uses: ncipollo/release-action@v1
+        with:
+          tag: latest
+          name: "Latest Release"
+          body: "Latest version of Jellyfin Media Automation scripts."
+          allowUpdates: true
+          artifacts: "JellyfinMediaAutomation.zip"
+          makeLatest: true
+          token: ${{ secrets.GITHUB_TOKEN }}
