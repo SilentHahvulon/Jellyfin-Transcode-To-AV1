@@ -85,6 +85,6 @@ You can also use the batch script standalone by dragging and dropping a video fi
 
 ## Note
 
-I am very new to coding and I built this project mainly for myself because I wasn't completely satisfied with how tools like Tdarr function. I decided to upload it here in case someone else finds it useful or can learn from it.
+I am very new to coding and I built this project mainly for myself because I wasn't completely satisfied with how tools like Tdarr function. I decided to upload it here in case someone else finds it useful or can learn from it. Criticism is welcome, hostility is not. I am willing to take any advice so I can do better in the future.
 
 *AI Disclosure: I used Google Gemini as a collaboration partner throughout the writing and troubleshooting of this repository. Jules (an AI agent) was also involved in writing this README file and is likely to be involved going forward.*
