@@ -1,6 +1,9 @@
 @echo off
 setlocal enabledelayedexpansion
 
+:: Ensure local bin is in PATH for dependencies
+set "PATH=%~dp0bin;%PATH%"
+
 cd "ffmpeg\Temp"
 
 :: 1. Define your temporary workspace

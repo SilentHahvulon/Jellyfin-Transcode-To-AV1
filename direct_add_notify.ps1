@@ -1,3 +1,6 @@
+# Ensure local bin is in PATH for dependencies
+$env:PATH = "$PSScriptRoot\bin;" + $env:PATH
+
 # Load shared configuration and API functions
 . "$PSScriptRoot\JellyfinFunctions.ps1"
 
