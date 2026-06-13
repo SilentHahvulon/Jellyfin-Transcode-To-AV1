@@ -1,3 +1,6 @@
+# Ensure local bin is in PATH for dependencies
+$env:PATH = "$PSScriptRoot\bin;" + $env:PATH
+
 . "$PSScriptRoot\JellyfinFunctions.ps1"
 
 $script:cleanLog = Join-Path $global:Config.Paths.LogDirectory "dashboard_clean.log"

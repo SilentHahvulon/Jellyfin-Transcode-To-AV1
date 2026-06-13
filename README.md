@@ -28,28 +28,29 @@ To use these scripts, you will need the following installed and available in you
 
 ## Setup
 
-1. **Clone the repository:**
-   ```bash
-   git clone https://github.com/your-repo/jellyfin-media-automation.git
-   cd jellyfin-media-automation
-   ```
+The easiest way to install and configure the project is to use the **Automated Installer**. This will download the latest version, check for missing dependencies (`ffmpeg` and `ab-av1`) and offer to download them locally, create a desktop shortcut, and run the configuration wizard.
 
-2. **Configuration:**
-   The easiest way to set up the project is to run the interactive setup script, which will guide you through creating your `.env` and `config.json` files based on the provided templates:
+1. **Open Windows PowerShell.**
+2. **Run the following command:**
    ```powershell
-   .\setup.ps1
+   irm https://raw.githubusercontent.com/SilentHahvulon/Jellyfin-Transcode-To-AV1/main/install.ps1 | iex
    ```
-   *Alternatively, you can manually copy `.env.example` to `.env` and `config.example.json` to `config.json` and edit them with your favorite text editor.*
 
-   - **Users**: (In `config.json`) Maps Seerr requester names to their Jellyfin usernames, Email, and Discord ID. This section may require manual configuration.
-   - **WatchFolders**: Folders to monitor for *transcoding*. Moves completed files to the `Processed` path.
-   - **DirectWatchFolders**: Folders to monitor for *direct additions* (no transcoding, just notifications).
-   - **Paths**: Paths for logs, the temporary FFmpeg directory, and the location of the `ffmpeg_convert_av1.bat` script.
+During setup, you will be guided through creating your `.env` and `config.json` files based on the provided templates.
+
+*Manual Configuration (if bypassing the wizard): You can manually copy `.env.example` to `.env` and `config.example.json` to `config.json` and edit them.*
+- **Users**: (In `config.json`) Maps Seerr requester names to their Jellyfin usernames, Email, and Discord ID. This section may require manual configuration.
+- **WatchFolders**: Folders to monitor for *transcoding*. Moves completed files to the `Processed` path.
+- **DirectWatchFolders**: Folders to monitor for *direct additions* (no transcoding, just notifications).
+- **Paths**: Paths for logs, the temporary FFmpeg directory, and the location of the `ffmpeg_convert_av1.bat` script.
 
 ## Usage
 
+### Quick Start
+Once installed, you can easily start both the Transcoding Workflow and the Direct Add Workflow by double-clicking the **"Jellyfin Media Automation" shortcut on your Desktop**. This will launch both monitoring scripts in separate terminal windows so you can easily track their progress.
+
 ### 1. Transcoding Workflow (`auto_add_to_ab-av1.ps1`)
-Run this script to monitor your "Unprocessed" folders. When a new file is completely copied, the script will:
+Run this script manually to monitor your "Unprocessed" folders. When a new file is completely copied, the script will:
 - Add it to a Priority or Standard queue.
 - Notify the requester that the transcode has started.
 - Call `ffmpeg_convert_av1.bat` to encode the file to AV1.
@@ -57,19 +58,11 @@ Run this script to monitor your "Unprocessed" folders. When a new file is comple
 - Trigger Sonarr/Radarr to scan the new file.
 - Send a "Ready to Watch" notification.
 
-```powershell
-.\auto_add_to_ab-av1.ps1
-```
-
 ### 2. Direct Add Workflow (`direct_add_notify.ps1`)
-Run this script to monitor folders where media is added directly without needing to be transcoded (e.g., pre-encoded AV1 downloads).
+Run this script manually to monitor folders where media is added directly without needing to be transcoded (e.g., pre-encoded AV1 downloads).
 - It waits for the file to finish copying.
 - Batches notifications (e.g., groups multiple episodes of a season together).
 - Sends a "Ready to Watch" notification.
-
-```powershell
-.\direct_add_notify.ps1
-```
 
 ### 3. Manual Transcoding (`ffmpeg_convert_av1.bat`)
 You can also use the batch script standalone by dragging and dropping a video file onto it, or passing the file path as an argument.
