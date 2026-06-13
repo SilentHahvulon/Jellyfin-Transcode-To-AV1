@@ -66,7 +66,7 @@ echo ----------------------------------------------------
 echo [1, 2, 3] Slow (Smallest File Size, Longest Time)
 echo [4, 5, 6] Balanced (Balanced File Size and Time)
 echo [7, 8, 9] Fast (Largest File Size, Shortest Time)
-choice /c 123456789 /t 120 /d 1 /n /m "Choose a preset (1-9): "
+choice /c 123456789 /t 120 /d 4 /n /m "Choose a preset (1-9): "
 
 set "preset=!ERRORLEVEL!"
 
@@ -76,7 +76,7 @@ echo ----------------------------------------------------
 echo [1, 2] Low Parallelism (Less CPU/RAM, Longer Time)
 echo [3, 4] Balanced Parallelism (Balanced CPU/RAM and Time)
 echo [5, 6] High Parallelism (Very High Resource Usage, Shorter Time [do not select 6 if you are using PC])
-choice /c 123456 /t 120 /d 6 /n /m "Choose a parallelism level (1-6): "
+choice /c 123456 /t 120 /d 4 /n /m "Choose a parallelism level (1-6): "
 
 set "parallelism=!ERRORLEVEL!"
 
