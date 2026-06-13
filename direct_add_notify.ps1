@@ -86,7 +86,7 @@ function Invoke-BatchedNotification {
             description = $desc
             color = 3447003 # Blue
             fields = $embedFields
-            footer = @{ text = "Tinym's Jellyfin Server" }
+            footer = @{ text = "Jellyfin Server" }
         }
         if ($mediaData.PosterUrl) { $successEmbed.image = @{ url = $mediaData.PosterUrl } }
 
