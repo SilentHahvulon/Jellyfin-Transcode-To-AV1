@@ -55,7 +55,7 @@ function Invoke-Transcode($filePath, $watchBase, $processedBase, $type) {
                 description = "Attempting AV1 conversion to reduce file size."
                 color = 16705372 # Yellow
                 fields = $embedFields
-                footer = @{ text = "Jellyfin Server" }
+                footer = @{ text = $env:JELLYFIN_SERVER_NAME }
             }
             if ($mediaData.PosterUrl) { $startEmbed.image = @{ url = $mediaData.PosterUrl } }
 
@@ -157,7 +157,7 @@ function Invoke-Transcode($filePath, $watchBase, $processedBase, $type) {
                     description = "Transcode finished successfully and file is now available in Jellyfin!"
                     color = 5763719 # Green
                     fields = $successFields
-                    footer = @{ text = "Jellyfin Server" }
+                    footer = @{ text = $env:JELLYFIN_SERVER_NAME }
                 }
                 if ($mediaData.PosterUrl) { $successEmbed.image = @{ url = $mediaData.PosterUrl } }
                 if ($mediaData.IsRequested) {
